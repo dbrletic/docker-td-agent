@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi7/ubi:latest
+FROM registry.access.redhat.com/ubi7/ubi:7.9-829
 MAINTAINER Drew Brletich
 
 ADD td-agent.repo /etc/yum.repos.d/td-agent.repo
