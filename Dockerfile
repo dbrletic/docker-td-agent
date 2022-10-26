@@ -1,29 +1,20 @@
-FROM ubuntu:14.04
-MAINTAINER Takayuki Shimizukawa shimizukawa@gmail.com
+FROM registry.access.redhat.com/ubi7/ubi:latest
+MAINTAINER Drew Brletich
 
-# environment
-ENV DEBIAN_FRONTEND noninteractive
+ADD td-agent.repo /etc/yum.repos.d/td-agent.repo
+ADD GPG-KEY-td-agent /etc/pki/rpm-gpg/RPM-GPG-KEY-td-agent
 
-# update
-RUN apt-get update && apt-get -y upgrade
+RUN yum -y update
+RUN	yum install -y td-agent
 
-# ruby related packages for td-agent
-RUN apt-get -y install curl libcurl4-openssl-dev ruby ruby-dev make
+#RUN curl -L https://toolbelt.treasuredata.com/sh/install-redhat-td-agent3.sh | sh
 
-# install fluentd td-agent
-RUN curl -L http://toolbelt.treasuredata.com/sh/install-ubuntu-trusty-td-agent2.sh | sh
-
-# clean cache files
-RUN apt-get clean && rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
-
-# install fluentd plugins
-RUN /opt/td-agent/embedded/bin/fluent-gem install --no-ri --no-rdoc \
-    fluent-plugin-elasticsearch \
-    fluent-plugin-record-modifier \
-    fluent-plugin-exclude-filter
-
+# install td-agent plugins
+RUN /usr/sbin/td-agent-gem install fluent-plugin-rewrite-tag-filter fluent-plugin-s3 fluent-plugin-td --no-ri --no-rdoc -V
 
 # add conf
 ADD ./etc/fluentd /etc/fluentd
 
-CMD /etc/init.d/td-agent stop && /opt/td-agent/embedded/bin/fluentd -c /etc/fluentd/fluent.conf
+EXPOSE 24224 5140
+VOLUME ["/etc/td-agent"]
+ENTRYPOINT ['td-agent']
